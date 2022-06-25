@@ -1,0 +1,184 @@
+{#变量：window.ordercode window.rowIndex#}
+{% extends "tableBase.html" %}
+{% block title %}
+    <title>用户下单</title>
+{% endblock %}
+
+{% block body %}
+    <body>
+    <h3 class="text-center mt-2">欢迎：{{ username }}</h3>
+    <div class="d-flex justify-content-end">
+        <div>
+            <button id="startOrderBtn" onclick="startOrder()" class="float-right btn btn-danger mr-2">开始订购</button>
+        </div>
+
+    </div>
+    <table id="dataTable" class="align-items-center text-center"></table>
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">商品编号： <span class="test"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    数量：<input type="number" id="countInput">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="orderItem()">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </body>
+    <script>
+        var id
+        $('#dataTable').bootstrapTable({
+            url: '/itemsToOrder',
+            pagination: true,
+            sidePagination: "client",
+            pageSize: 10,
+            //toolbar: "#toolbar",
+            pageList: [10, 25, 50, 100],
+            // showToggle: true,
+            search: true,
+            clickToSelect: false,
+            uniqueId: "ID",
+            columns: [{
+                checkbox: true,
+                visible: true
+            }, {
+                field: 'item_code__item_name',
+                title: '商品名称'
+            }, {
+                field: 'true_price',
+                title: '商品价格(供应表的真实价格)'
+            }, {
+                field: 'item_code__item_stock',
+                title: '商品库存'
+            }, {
+                field: 'orderCount',
+                title: "订购数量"
+
+            }, {
+                field: 'item_code_id',
+                title: "操作",
+                align: "center",
+                valign: "middle",
+                width: "150",
+                formatter: "actionFormatter"
+            }],
+            onDblClickRow: function (row, $element) {
+                var selectRows = $("#dataTable").bootstrapTable('getSelections')
+                console.log(selectRows)
+            },
+        })
+
+        function EditViewById(id, index) {
+            $(".test").html("" + id);
+            //设置全局变量 row index
+            window.rowIndex = index;
+        }
+
+        // table的最后一列 操作栏的格式化
+        function actionFormatter(value, row, index) {
+            // 这莫名其妙的就把ID得到了
+            var id = value;
+            var result = "";
+            result += "<button class='btn btn-primary btn-sm mr-2' data-toggle=\"modal\" data-target=\"#exampleModal\" onclick=\"EditViewById('" + id + "','" + index + "')\">订购</button>";
+            return result;
+        }
+
+        //Ajax给后台传送数量和id 后台进行数据库的操作 返回成功或者失败 然后前端进行库存修改
+        function orderItem() {
+            var id = $(".test").text()
+            var number = $("#countInput").val()
+            var stock = $("#dataTable").bootstrapTable("getData")[rowIndex].item_code__item_stock
+
+            //判断库存数量和订购数量关系！
+            if (parseInt(number) > parseInt(stock)) {
+                alert("订购数量超过库存数量！");
+                return;
+            }
+
+            // 防止未创建订单就订购
+            if(window.ordercode===undefined){
+                alert("选购前请先点击上方红色按钮！");
+                return;
+            }
+
+            //数据库创建订购明细！ 需要传入 订单编号、供应编号、订购数量 来完成订单明细的创建
+            $.ajax({
+                url: "/orderItem",    //请求的url地址
+                // dataType: "json",   //返回格式为json
+                async: true,//请求是否异步，默认为异步，这也是ajax重要特性
+                data: {"id": id, "number": number, "ordercode": window.ordercode},    //参数值id: 供应商品编号 number:数量 ordercode:订单编号
+                type: "GET",   //请求方式
+                beforeSend: function () {
+                    //请求前的处理 更改单元格内容
+                    $('#dataTable').bootstrapTable('updateCell', {
+                        index: rowIndex,
+                        field: "orderCount",
+                        value: parseInt(number) + parseInt($("#dataTable").bootstrapTable("getData")[rowIndex].orderCount)
+                    })
+
+                },
+                success: function (data) {
+                    //alert("请求成功")
+                    $(".close").click();
+                    var newStock = data.stockUpdate;
+                    console.log(newStock);
+                    //todo 修改表格库存量(不刷新网页) 数据源于后端
+                    updateStock(newStock)
+
+                },
+                complete: function () {
+                    //请求完成的处理
+                },
+                error: function () {
+                    //请求出错处理
+                }
+            });
+
+        }
+
+        //点击开始订购 ajax发送给后台 创建客户的一个订单
+        function startOrder() {
+            $.ajax({
+                url: "/createOrder",    //请求的url地址
+                dataType: "json",   //返回格式为json
+                async: true,//请求是否异步，默认为异步，这也是ajax重要特性
+                //data: {},    //参数值
+                type: "GET",   //请求方式
+                beforeSend: function () {
+                    //请求前的处理 更改单元格内容
+
+                },
+                success: function (data) {
+                    //alert("请求成功")
+                    alert("添加订单成功订单号：" + data.ordercode);
+                    window.ordercode = data.ordercode;
+                },
+                complete: function () {
+                    //请求完成的处理
+                },
+                error: function () {
+                    //请求出错处理
+                }
+            });
+        }
+
+        function updateStock(number) {
+            $('#dataTable').bootstrapTable('updateCell', {
+                index: rowIndex,
+                field: "item_code__item_stock",
+                value: number
+            })
+        }
+    </script>
+{% endblock %}

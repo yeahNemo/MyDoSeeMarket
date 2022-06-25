@@ -1,0 +1,40 @@
+{% extends "tableBase.html" %}
+
+{% block title %}
+    <title>订单查看</title>
+{% endblock %}
+
+{% block body %}
+<body>
+<table id="dataTable" class="table table-hover table-bordered table-striped"></table>
+
+</body>
+<script>
+    $('#dataTable').bootstrapTable({
+        url: '/allorders',
+        pagination: true,
+        sidePagination: "client",
+        pageSize: 10,
+        //toolbar: "#toolbar",
+        pageList: [10, 25, 50, 100],
+        showToggle: true,
+        search: true,
+        columns: [{
+            field: 'order_code',
+            title: '订单编号'
+        }, {
+            field: 'order_totalCost',
+            title: '订单总金额'
+        }],
+        onDblClickRow: function (row, $element) {
+                     var id = row.ID;
+                     EditViewById(id);
+                 }
+    })
+
+    function EditViewById(id){
+        alert("双击第"+ id + "列")
+    }
+</script>
+
+{% endblock %}

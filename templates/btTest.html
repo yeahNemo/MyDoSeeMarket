@@ -1,0 +1,46 @@
+{% extends "tableBase.html" %}
+
+{% block title %}
+    <title>订单详情</title>
+{% endblock %}
+
+{% block body %}
+<body>
+<table id="dataTable" class="table table-hover table-bordered table-striped"></table>
+
+</body>
+<script>
+    $('#dataTable').bootstrapTable({
+        url: '/allitems',
+        pagination: true,
+        sidePagination: "client",
+        pageSize: 2,
+        //toolbar: "#toolbar",
+        pageList: [10, 25, 50, 100],
+        showToggle: true,
+        search: true,
+        columns: [{
+            field: 'item_code',
+            title: '商品编号'
+        }, {
+            field: 'item_name',
+            title: '商品名称'
+        }, {
+            field: 'item_marketPrice',
+            title: '商品市场价'
+        },{
+            field: 'item_stock',
+            title: '商品库存'
+        }],
+        onDblClickRow: function (row, $element) {
+                     var id = row.ID;
+                     EditViewById(id);
+                 }
+    })
+
+    function EditViewById(id){
+        alert("双击第"+ id + "列")
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+[
+  {
+    'item_code': '01',
+    'item_name': '奇异博士',
+    'item_model': 'II'
+  },
+  {
+    'item_code': '02',
+    'item_name': '小蜘蛛',
+    'item_model': 'I'
+  }
+]
