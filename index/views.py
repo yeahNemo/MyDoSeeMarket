@@ -44,6 +44,7 @@ def test02(request):
     return HttpResponse("HI")
 
 
+@login_required
 def itemToOrder(request):
     # 使用查询语法进行查询
     supply = models.Supply.objects.all().values("true_price", "item_code__item_name", "item_code__item_stock",
@@ -56,14 +57,11 @@ def itemToOrder(request):
     # 以 json 格式返回我的可够商品
     for s in supply:
         s["orderCount"]=0
-        print(s)
+        # print(s)
         data.append(s)
     json_data = json.dumps(data, ensure_ascii=False)
+    # print(json_data)
     return HttpResponse(json_data)
-
-
-def customer(request):
-    return render(request, "customerOrder.html")
 
 
 def orderItem(request):
@@ -80,7 +78,6 @@ def orderItem(request):
     print(model_to_dict(order))
     # 2、添加 orderdetail 订单明细
     orderdetail = models.OrderDetail.objects.create(order_count=number,order_code=order,supply_code=supply)
-    # todo 订单总金额要加 库存要减
     # 加总金额
     order = models.Order.objects.filter(order_code=ordercode).first()
     models.Order.objects.filter(order_code=ordercode).update(order_totalCost=int(number) * int(supply.true_price) + int(order.order_totalCost))
@@ -110,6 +107,7 @@ def loginPage(request):
     return render(request, "login.html")
 
 
+@login_required
 def createOrder(request):
     user_id = request.session.get("_auth_user_id")
     user = models.CustomerInfo.objects.filter(customer_code=user_id).first()
@@ -117,14 +115,16 @@ def createOrder(request):
     order = models.Order.objects.create(order_totalCost=0, order_postalCode="10011", customer_code=user)
     return JsonResponse({"ordercode":order.order_code})
 
+@login_required
 def allOrder(request):
     orders = models.Order.objects.all().values("order_code","order_totalCost") # todo order_date是无法序列化为json 因此前端无法接收
     data = []
     for o in orders:
         data.append(o)
     json_data = json.dumps(data, ensure_ascii=False)
-    print(json_data)
+    # print(json_data)
     return HttpResponse(json_data)
 
+@login_required
 def orderPage(request):
     return render(request, "orders.html")

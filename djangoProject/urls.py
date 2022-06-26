@@ -31,7 +31,6 @@ urlpatterns = [
     path('allitems/',inc.allItems),
     path('item/',inc.itemPage),
     path('test2/',inc.test02),
-    path('customer',inc.customer),
     path('orderItem/', inc.orderItem),
     path('loginPage/',inc.loginPage),
     path('login/', inc.login),
